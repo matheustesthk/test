@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindHub - Gestão Pessoal & Produtividade</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            900: '#14532d',
+                        },
+                        dark: {
+                            bg: '#090d16',
+                            card: '#111827',
+                            border: '#1f2937',
+                            hover: '#1e293b'
+                        },
+                        accent: {
+                            cyan: '#06b6d4',
+                            purple: '#a855f7',
+                            amber: '#f59e0b',
+                            rose: '#f43f5e',
+                            pink: '#ec4899',
+                            emerald: '#10b981'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #090d16;
+            color: #f3f4f6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism effects */
+        .glass-card {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card-hover {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card-hover:hover {
+            border-color: rgba(74, 222, 128, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(34, 197, 94, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
+        }
+
+        /* Pomodoro Circular Animation */
+        .pomo-circle {
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        /* Nav link active glow */
+        .nav-item-active {
+            background: linear-gradient(90deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0) 100%);
+            border-left: 3px solid #22c55e;
+            color: #4ade80 !important;
+        }
+
+        /* Custom checkbox styles */
+        .custom-checkbox:checked {
+            background-color: #22c55e;
+            border-color: #22c55e;
+        }
+
+        /* Smooth hide scrollbar for mobile nav */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col md:flex-row min-h-screen selection:bg-brand-500 selection:text-white">
+
+    <!-- Desktop Sidebar -->
+    <aside id="sidebar" class="hidden md:flex flex-col w-64 bg-dark-card border-r border-dark-border p-4 justify-between z-30 shrink-0">
+        <div class="space-y-6">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3 px-2 py-2">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-cyan flex items-center justify-center text-white text-xl font-black shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg tracking-tight text-white leading-none">MindHub</h1>
+                    <span class="text-[10px] font-bold tracking-widest text-brand-400 uppercase">Gestão Pessoal</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="space-y-1">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-400 hover:text-white hover:bg-dark-hover transition text-left nav-item-active">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span>Dashboard</span>
+                </button>
+
+                <button onclick="switchTab('tasks')" id="nav-tasks" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-400 hover:text-white hover:bg-dark-hover transition text-left">
+                    <i class="fa-solid fa-list-check w-5 text-center"></i>
+                    <span>Tarefas & Kanban</span>
+                </button>
+
+                <button onclick="switchTab('finances')" id="nav-finances" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-400 hover:text-white hover:bg-dark-hover transition text-left">
+                    <i class="fa-solid fa-wallet w-5 text-center"></i>
+                    <span>Financeiro</span>
+                </button>
+
+                <button onclick="switchTab('habits')" id="nav-habits" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-400 hover:text-white hover:bg-dark-hover transition text-left">
+                    <i class="fa-solid fa-fire w-5 text-center"></i>
+                    <span>Hábitos</span>
+                </button>
+
+                <button onclick="switchTab('notes')" id="nav-notes" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-400 hover:text-white hover:bg-dark-hover transition text-left">
+                    <i class="fa-solid fa-note-sticky w-5 text-center"></i>
+                    <span>Notas & Ideias</span>
+                </button>
+
+                <button onclick="switchTab('pomodoro')" id="nav-pomodoro" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-400 hover:text-white hover:bg-dark-hover transition text-left">
+                    <i class="fa-solid fa-stopwatch w-5 text-center"></i>
+                    <span>Timer Pomodoro</span>
+                </button>
+
+                <!-- NEW TAB: Lista de Desejos (Located right below Timer Pomodoro) -->
+                <button onclick="switchTab('wishlist')" id="nav-wishlist" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-400 hover:text-white hover:bg-dark-hover transition text-left">
+                    <i class="fa-solid fa-wand-magic-sparkles w-5 text-center text-accent-pink"></i>
+                    <span class="flex-1">Lista de Desejos</span>
+                    <span id="wishlist-badge-count" class="bg-accent-pink/20 text-accent-pink text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sidebar Bottom Footer / Profile -->
+        <div class="pt-4 border-t border-dark-border space-y-3">
+            <div class="flex items-center gap-3 px-2">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-brand-500/50">
+                <div class="overflow-hidden">
+                    <p class="text-xs font-bold text-white truncate">Alex Silva</p>
+                    <p class="text-[10px] text-gray-400 truncate">Plano Pro • Ativo</p>
+                </div>
+            </div>
+            
+            <button onclick="resetDataModal()" class="w-full py-1.5 px-3 text-xs text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 rounded border border-dark-border transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-rotate-left text-[10px]"></i>
+                <span>Resetar Dados</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Shell -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto pb-24 md:pb-6">
+        
+        <!-- Top Navigation Bar -->
+        <header class="sticky top-0 z-20 glass-card border-b border-dark-border px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white text-lg">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 id="page-title" class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-brand-400"></i>
+                    <span>Dashboard</span>
+                </h2>
+            </div>
+
+            <!-- Header Quick Actions -->
+            <div class="flex items-center gap-2.5">
+                <button onclick="openModal('quick-add')" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-brand-600/20">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="hidden sm:inline">Criar Novo</span>
+                </button>
+
+                <div class="h-6 w-px bg-dark-border hidden sm:block"></div>
+
+                <div class="text-right hidden sm:block">
+                    <p id="header-date" class="text-xs font-semibold text-gray-300">Quinta, 8 de Outubro</p>
+                    <p id="header-greeting" class="text-[10px] text-brand-400 font-bold">Boa tarde, Alex!</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Main Views Container -->
+        <main class="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+
+            <!-- SECTION 1: DASHBOARD -->
+            <section id="view-dashboard" class="space-y-6">
+                <!-- Metrics Summary Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Metric 1: Tasks -->
+                    <div class="glass-card glass-card-hover p-4 rounded-2xl relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-400">Tarefas do Dia</span>
+                            <div class="w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 flex items-center justify-center">
+                                <i class="fa-solid fa-check-double text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline gap-2">
+                            <span id="dash-task-count" class="text-2xl font-black text-white">0/0</span>
+                            <span id="dash-task-pct" class="text-xs font-semibold text-brand-400">0%</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-1">Concluídas hoje</p>
+                    </div>
+
+                    <!-- Metric 2: Finances -->
+                    <div class="glass-card glass-card-hover p-4 rounded-2xl relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-400">Saldo Financeiro</span>
+                            <div class="w-8 h-8 rounded-lg bg-accent-cyan/10 text-accent-cyan flex items-center justify-center">
+                                <i class="fa-solid fa-arrow-trend-up text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <span id="dash-balance" class="text-2xl font-black text-white">R$ 0,00</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-1">Balanço do mês atual</p>
+                    </div>
+
+                    <!-- Metric 3: Habits -->
+                    <div class="glass-card glass-card-hover p-4 rounded-2xl relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-400">Hábitos Hoje</span>
+                            <div class="w-8 h-8 rounded-lg bg-accent-amber/10 text-accent-amber flex items-center justify-center">
+                                <i class="fa-solid fa-fire text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline gap-2">
+                            <span id="dash-habit-pct" class="text-2xl font-black text-white">0%</span>
+                            <span id="dash-habit-count" class="text-xs font-semibold text-accent-amber">0/0</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-1">Conclusão diária</p>
+                    </div>
+
+                    <!-- Metric 4: Wishlist Progress -->
+                    <div class="glass-card glass-card-hover p-4 rounded-2xl relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-400">Metas / Desejos</span>
+                            <div class="w-8 h-8 rounded-lg bg-accent-pink/10 text-accent-pink flex items-center justify-center">
+                                <i class="fa-solid fa-gift text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline gap-2">
+                            <span id="dash-wish-pct" class="text-2xl font-black text-white">0%</span>
+                            <span id="dash-wish-count" class="text-xs font-semibold text-accent-pink">0/0</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-1">Progresso total guardado</p>
+                    </div>
+                </div>
+
+                <!-- Dashboard Center Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left 2 Cols: Priority Tasks, Habits & Wishlist Widget -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Priority Tasks Card -->
+                        <div class="glass-card p-5 rounded-2xl space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-list-check text-brand-400"></i>
+                                    <span>Tarefas Prioritárias</span>
+                                </h3>
+                                <button onclick="switchTab('tasks')" class="text-xs text-brand-400 hover:underline font-semibold">Ver todas →</button>
+                            </div>
+                            <div id="dash-task-list" class="space-y-2">
+                                <!-- Injected via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Habit Tracker Quick Bar -->
+                        <div class="glass-card p-5 rounded-2xl space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-fire text-accent-amber"></i>
+                                    <span>Hábitos para Hoje</span>
+                                </h3>
+                                <button onclick="switchTab('habits')" class="text-xs text-accent-amber hover:underline font-semibold">Gerenciar →</button>
+                            </div>
+                            <div id="dash-habit-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <!-- Injected via JS -->
+                            </div>
+                        </div>
+
+                        <!-- NEW DASHBOARD WIDGET: Próximos Desejos a Conquistar -->
+                        <div class="glass-card p-5 rounded-2xl space-y-4 border border-accent-pink/20">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-accent-pink"></i>
+                                    <span>Próximos Desejos Quase Lá</span>
+                                </h3>
+                                <button onclick="switchTab('wishlist')" class="text-xs text-accent-pink hover:underline font-semibold">Ver Lista Completa →</button>
+                            </div>
+                            <div id="dash-wishlist-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <!-- Injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Col: Financial Overview & Pomodoro Widget -->
+                    <div class="space-y-6">
+                        <!-- Financial Chart Mini Widget -->
+                        <div class="glass-card p-5 rounded-2xl space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-pie text-accent-cyan"></i>
+                                    <span>Gastos por Categoria</span>
+                                </h3>
+                            </div>
+                            <div class="relative h-48 flex items-center justify-center">
+                                <canvas id="dash-finance-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Quick Pomodoro Widget -->
+                        <div class="glass-card p-5 rounded-2xl space-y-3 text-center bg-gradient-to-b from-dark-card to-dark-bg">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Sessão Atual</span>
+                            <div id="dash-pomo-display" class="text-4xl font-black text-white font-mono my-2">25:00</div>
+                            <div class="flex justify-center gap-2">
+                                <button onclick="togglePomodoro()" id="dash-pomo-btn" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition">
+                                    Iniciar
+                                </button>
+                                <button onclick="switchTab('pomodoro')" class="bg-dark-border hover:bg-gray-700 text-gray-300 font-bold text-xs px-3 py-2 rounded-lg transition">
+                                    Abrir Timer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: TASKS / KANBAN -->
+            <section id="view-tasks" class="hidden space-y-6">
+                <!-- Task Toolbar -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 glass-card p-4 rounded-2xl">
+                    <!-- Search & Filter -->
+                    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto flex-1 max-w-md">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                            <input type="text" id="task-search" oninput="renderTasks()" placeholder="Buscar tarefa..." class="w-full bg-dark-bg border border-dark-border rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+                        </div>
+                        <select id="task-filter-priority" onchange="renderTasks()" class="bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-brand-500">
+                            <option value="all">Todas Prioridades</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Média">Média</option>
+                            <option value="Baixa">Baixa</option>
+                        </select>
+                    </div>
+
+                    <!-- View Toggle Button & Add Button -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <div class="bg-dark-bg p-1 rounded-lg border border-dark-border flex gap-1">
+                            <button onclick="setTaskView('kanban')" id="btn-view-kanban" class="px-2.5 py-1 text-xs font-semibold rounded bg-brand-600 text-white transition">Kanban</button>
+                            <button onclick="setTaskView('list')" id="btn-view-list" class="px-2.5 py-1 text-xs font-semibold rounded text-gray-400 hover:text-white transition">Lista</button>
+                        </div>
+                        <button onclick="openModal('task')" class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i> Nova Tarefa
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kanban Board View -->
+                <div id="tasks-kanban-view" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Column: To Do -->
+                    <div class="glass-card p-4 rounded-2xl space-y-4">
+                        <div class="flex items-center justify-between pb-2 border-b border-dark-border">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-accent-amber"></span>
+                                <h4 class="font-bold text-white text-xs">A Fazer</h4>
+                            </div>
+                            <span id="count-todo" class="text-xs bg-dark-bg text-gray-400 px-2 py-0.5 rounded-full font-mono">0</span>
+                        </div>
+                        <div id="col-todo" class="space-y-3 min-h-[250px]"></div>
+                    </div>
+
+                    <!-- Column: In Progress -->
+                    <div class="glass-card p-4 rounded-2xl space-y-4">
+                        <div class="flex items-center justify-between pb-2 border-b border-dark-border">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-accent-cyan"></span>
+                                <h4 class="font-bold text-white text-xs">Em Progresso</h4>
+                            </div>
+                            <span id="count-in-progress" class="text-xs bg-dark-bg text-gray-400 px-2 py-0.5 rounded-full font-mono">0</span>
+                        </div>
+                        <div id="col-in-progress" class="space-y-3 min-h-[250px]"></div>
+                    </div>
+
+                    <!-- Column: Done -->
+                    <div class="glass-card p-4 rounded-2xl space-y-4">
+                        <div class="flex items-center justify-between pb-2 border-b border-dark-border">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                                <h4 class="font-bold text-white text-xs">Concluído</h4>
+                            </div>
+                            <span id="count-done" class="text-xs bg-dark-bg text-gray-400 px-2 py-0.5 rounded-full font-mono">0</span>
+                        </div>
+                        <div id="col-done" class="space-y-3 min-h-[250px]"></div>
+                    </div>
+                </div>
+
+                <!-- Alternative List View -->
+                <div id="tasks-list-view" class="hidden glass-card p-4 rounded-2xl space-y-2">
+                    <div id="tasks-list-container" class="divide-y divide-dark-border"></div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: FINANCES -->
+            <section id="view-finances" class="hidden space-y-6">
+                <!-- Financial Overview Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="glass-card p-5 rounded-2xl">
+                        <span class="text-xs font-semibold text-gray-400">Total Receitas</span>
+                        <p id="fin-income" class="text-2xl font-black text-brand-400 mt-1">R$ 0,00</p>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl">
+                        <span class="text-xs font-semibold text-gray-400">Total Despesas</span>
+                        <p id="fin-expense" class="text-2xl font-black text-accent-rose mt-1">R$ 0,00</p>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl">
+                        <span class="text-xs font-semibold text-gray-400">Saldo Líquido</span>
+                        <p id="fin-balance" class="text-2xl font-black text-white mt-1">R$ 0,00</p>
+                    </div>
+                </div>
+
+                <!-- Financial Main Content -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Transactions List -->
+                    <div class="lg:col-span-2 glass-card p-5 rounded-2xl space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-white text-sm">Histórico de Transações</h3>
+                            <button onclick="openModal('finance')" class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                                <i class="fa-solid fa-plus mr-1"></i> Nova Transação
+                            </button>
+                        </div>
+                        <div id="finance-list" class="divide-y divide-dark-border max-h-[400px] overflow-y-auto pr-1">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Category Breakdown Chart -->
+                    <div class="glass-card p-5 rounded-2xl space-y-4">
+                        <h3 class="font-bold text-white text-sm">Distribuição de Gastos</h3>
+                        <div class="relative h-64 flex items-center justify-center">
+                            <canvas id="finance-chart-main"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: HABITS -->
+            <section id="view-habits" class="hidden space-y-6">
+                <!-- Habit Header -->
+                <div class="flex justify-between items-center glass-card p-4 rounded-2xl">
+                    <div>
+                        <h3 class="font-bold text-white text-sm">Rastreador de Hábitos Semanal</h3>
+                        <p class="text-xs text-gray-400">Mantenha sua rotina diária consistente</p>
+                    </div>
+                    <button onclick="openModal('habit')" class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition">
+                        <i class="fa-solid fa-plus mr-1"></i> Novo Hábito
+                    </button>
+                </div>
+
+                <!-- Habit Grid Matrix -->
+                <div id="habits-matrix-container" class="space-y-4">
+                    <!-- Injected via JS -->
+                </div>
+            </section>
+
+            <!-- SECTION 5: NOTES & IDEAS -->
+            <section id="view-notes" class="hidden space-y-6">
+                <!-- Toolbar -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 glass-card p-4 rounded-2xl">
+                    <div class="relative flex-1 max-w-md w-full">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input type="text" id="note-search" oninput="renderNotes()" placeholder="Buscar em notas e tags..." class="w-full bg-dark-bg border border-dark-border rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                    <button onclick="openModal('note')" class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition">
+                        <i class="fa-solid fa-plus mr-1"></i> Nova Nota
+                    </button>
+                </div>
+
+                <!-- Notes Cards Grid -->
+                <div id="notes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Injected via JS -->
+                </div>
+            </section>
+
+            <!-- SECTION 6: POMODORO TIMER -->
+            <section id="view-pomodoro" class="hidden space-y-6">
+                <div class="max-w-xl mx-auto glass-card p-8 rounded-3xl text-center space-y-6">
+                    <!-- Mode Selector Pills -->
+                    <div class="inline-flex bg-dark-bg p-1.5 rounded-full border border-dark-border gap-1">
+                        <button onclick="setPomoMode('focus')" id="pomo-mode-focus" class="px-4 py-1.5 text-xs font-bold rounded-full bg-brand-600 text-white transition">Foco (25m)</button>
+                        <button onclick="setPomoMode('shortBreak')" id="pomo-mode-short" class="px-4 py-1.5 text-xs font-bold rounded-full text-gray-400 hover:text-white transition">Pausa Curta (5m)</button>
+                        <button onclick="setPomoMode('longBreak')" id="pomo-mode-long" class="px-4 py-1.5 text-xs font-bold rounded-full text-gray-400 hover:text-white transition">Pausa Longa (15m)</button>
+                    </div>
+
+                    <!-- Circular Timer Display -->
+                    <div class="relative w-64 h-64 mx-auto flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90">
+                            <circle cx="128" cy="128" r="110" stroke="currentColor" stroke-width="10" class="text-dark-border fill-none" />
+                            <circle id="pomo-progress-ring" cx="128" cy="128" r="110" stroke="currentColor" stroke-width="10" class="text-brand-500 fill-none pomo-circle" stroke-dasharray="691" stroke-dashoffset="0" stroke-linecap="round" />
+                        </svg>
+                        <div class="absolute flex flex-col items-center">
+                            <span id="pomo-timer-text" class="text-5xl font-black text-white font-mono tracking-tight">25:00</span>
+                            <span id="pomo-mode-label" class="text-xs text-brand-400 font-bold uppercase tracking-widest mt-2">Sessão de Foco</span>
+                        </div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="flex justify-center gap-3 pt-2">
+                        <button onclick="togglePomodoro()" id="pomo-main-btn" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm px-8 py-3 rounded-xl transition shadow-lg shadow-brand-600/30">
+                            Iniciar Foco
+                        </button>
+                        <button onclick="resetPomodoro()" class="bg-dark-border hover:bg-gray-700 text-gray-300 font-bold text-sm px-5 py-3 rounded-xl transition">
+                            Resetar
+                        </button>
+                    </div>
+
+                    <!-- Stats Footer -->
+                    <div class="pt-6 border-t border-dark-border grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <span class="text-gray-400">Sessões Concluídas</span>
+                            <p id="pomo-sessions-count" class="text-lg font-bold text-white mt-0.5">0</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Total Focado Hoje</span>
+                            <p id="pomo-total-time" class="text-lg font-bold text-brand-400 mt-0.5">0 min</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 7: LISTA DE DESEJOS (WISHLIST) -->
+            <section id="view-wishlist" class="hidden space-y-6">
+                
+                <!-- Wishlist Metric Summary Header -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Total Saved -->
+                    <div class="glass-card p-4 rounded-2xl relative">
+                        <span class="text-xs font-bold text-gray-400">Total Economizado</span>
+                        <div class="mt-2 flex items-baseline justify-between">
+                            <span id="wish-total-saved" class="text-xl sm:text-2xl font-black text-accent-pink">R$ 0,00</span>
+                            <i class="fa-solid fa-piggy-bank text-accent-pink/30 text-2xl"></i>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-1">Valor guardado em metas</p>
+                    </div>
+
+                    <!-- Total Target Goal -->
+                    <div class="glass-card p-4 rounded-2xl relative">
+                        <span class="text-xs font-bold text-gray-400">Meta Total da Lista</span>
+                        <div class="mt-2 flex items-baseline justify-between">
+                            <span id="wish-total-target" class="text-xl sm:text-2xl font-black text-white">R$ 0,00</span>
+                            <i class="fa-solid fa-bullseye text-brand-400/30 text-2xl"></i>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-1">Soma de todos os desejos</p>
+                    </div>
+
+                    <!-- Conquered Count -->
+                    <div class="glass-card p-4 rounded-2xl relative">
+                        <span class="text-xs font-bold text-gray-400">Itens Conquistados</span>
+                        <div class="mt-2 flex items-baseline justify-between">
+                            <span id="wish-conquered-count" class="text-xl sm:text-2xl font-black text-brand-400">0 / 0</span>
+                            <i class="fa-solid fa-trophy text-brand-400/30 text-2xl"></i>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-1">Conquistas realizadas 🎉</p>
+                    </div>
+
+                    <!-- Overall Progress -->
+                    <div class="glass-card p-4 rounded-2xl relative">
+                        <span class="text-xs font-bold text-gray-400">Progresso Geral</span>
+                        <div class="mt-2 flex items-baseline justify-between">
+                            <span id="wish-overall-pct" class="text-xl sm:text-2xl font-black text-accent-cyan">0%</span>
+                            <i class="fa-solid fa-chart-line text-accent-cyan/30 text-2xl"></i>
+                        </div>
+                        <!-- Progress bar -->
+                        <div class="w-full bg-dark-bg rounded-full h-1.5 mt-2 overflow-hidden border border-dark-border">
+                            <div id="wish-overall-bar" class="bg-gradient-to-r from-accent-pink to-accent-cyan h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wishlist Control Bar -->
+                <div class="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 glass-card p-4 rounded-2xl">
+                    <!-- Search & Filters -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1">
+                        <!-- Search Box -->
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                            <input type="text" id="wish-search" oninput="renderWishlist()" placeholder="Buscar desejo..." class="w-full bg-dark-bg border border-dark-border rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-accent-pink">
+                        </div>
+
+                        <!-- Category Filter -->
+                        <select id="wish-filter-category" onchange="renderWishlist()" class="bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-accent-pink">
+                            <option value="all">Todas as Categorias</option>
+                            <option value="Tecnologia">Tecnologia</option>
+                            <option value="Viagens">Viagens</option>
+                            <option value="Lazer">Lazer</option>
+                            <option value="Casa">Casa</option>
+                            <option value="Estudos">Estudos</option>
+                            <option value="Vestuário">Vestuário</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+
+                        <!-- Priority Filter -->
+                        <select id="wish-filter-priority" onchange="renderWishlist()" class="bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-accent-pink">
+                            <option value="all">Todas as Prioridades</option>
+                            <option value="Alta">Prioridade Alta</option>
+                            <option value="Média">Prioridade Média</option>
+                            <option value="Baixa">Prioridade Baixa</option>
+                        </select>
+
+                        <!-- Status Filter -->
+                        <select id="wish-filter-status" onchange="renderWishlist()" class="bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-accent-pink">
+                            <option value="all">Todos os Status</option>
+                            <option value="pending">Em Progresso</option>
+                            <option value="conquered">Conquistado 🎉</option>
+                        </select>
+                    </div>
+
+                    <!-- Add Button -->
+                    <button onclick="openModal('wish')" class="bg-gradient-to-r from-accent-pink to-accent-purple hover:opacity-90 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-accent-pink/20 shrink-0">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Novo Desejo</span>
+                    </button>
+                </div>
+
+                <!-- Wish Cards Grid Container -->
+                <div id="wishlist-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Injected via JS -->
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar (Updated to include Wishlist icon cleanly) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 glass-card border-t border-dark-border px-2 py-2 flex justify-between items-center z-40 overflow-x-auto no-scrollbar">
+        <button onclick="switchTab('dashboard')" id="mobile-nav-dashboard" class="flex flex-col items-center min-w-[52px] text-brand-400 gap-1">
+            <i class="fa-solid fa-chart-pie text-sm"></i>
+            <span class="text-[9px] font-semibold">Dash</span>
+        </button>
+        <button onclick="switchTab('tasks')" id="mobile-nav-tasks" class="flex flex-col items-center min-w-[52px] text-gray-400 gap-1">
+            <i class="fa-solid fa-list-check text-sm"></i>
+            <span class="text-[9px] font-semibold">Tarefas</span>
+        </button>
+        <button onclick="switchTab('finances')" id="mobile-nav-finances" class="flex flex-col items-center min-w-[52px] text-gray-400 gap-1">
+            <i class="fa-solid fa-wallet text-sm"></i>
+            <span class="text-[9px] font-semibold">Finanças</span>
+        </button>
+        <button onclick="switchTab('habits')" id="mobile-nav-habits" class="flex flex-col items-center min-w-[52px] text-gray-400 gap-1">
+            <i class="fa-solid fa-fire text-sm"></i>
+            <span class="text-[9px] font-semibold">Hábitos</span>
+        </button>
+        <button onclick="switchTab('notes')" id="mobile-nav-notes" class="flex flex-col items-center min-w-[52px] text-gray-400 gap-1">
+            <i class="fa-solid fa-note-sticky text-sm"></i>
+            <span class="text-[9px] font-semibold">Notas</span>
+        </button>
+        <button onclick="switchTab('pomodoro')" id="mobile-nav-pomodoro" class="flex flex-col items-center min-w-[52px] text-gray-400 gap-1">
+            <i class="fa-solid fa-stopwatch text-sm"></i>
+            <span class="text-[9px] font-semibold">Pomo</span>
+        </button>
+        <button onclick="switchTab('wishlist')" id="mobile-nav-wishlist" class="flex flex-col items-center min-w-[52px] text-gray-400 gap-1">
+            <i class="fa-solid fa-wand-magic-sparkles text-sm text-accent-pink"></i>
+            <span class="text-[9px] font-semibold">Desejos</span>
+        </button>
+    </nav>
+
+    <!-- UNIFIED MODAL OVERLAY -->
+    <div id="app-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="glass-card bg-dark-card border border-dark-border rounded-2xl w-full max-w-md p-6 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-base">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 id="modal-title" class="font-bold text-white text-base mb-4">Título do Modal</h3>
+
+            <!-- Dynamic Form Area -->
+            <form id="modal-form" onsubmit="handleModalSubmit(event)">
+                <div id="modal-body" class="space-y-4">
+                    <!-- Form inputs injected dynamically -->
+                </div>
+                <div class="mt-6 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-white rounded-lg border border-dark-border">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 text-xs font-bold bg-brand-600 hover:bg-brand-500 text-white rounded-lg transition">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Storage Constant
+        const STORAGE_KEY = 'mindhub_gui_data_v2';
+
+        // Default Data Seed with Wishlist Included
+        const defaultState = {
+            tasks: [
+                { id: '1', title: 'Revisar relatório trimestral', priority: 'Alta', status: 'In Progress', category: 'Trabalho', dueDate: '2026-10-10' },
+                { id: '2', title: 'Treino de cardio 30min', priority: 'Média', status: 'Done', category: 'Saúde', dueDate: '2026-10-08' },
+                { id: '3', title: 'Comprar livros de produtividade', priority: 'Baixa', status: 'To Do', category: 'Pessoal', dueDate: '2026-10-15' }
+            ],
+            finances: [
+                { id: '1', title: 'Salário Mensal', amount: 4500, type: 'income', category: 'Salário', date: '2026-10-01' },
+                { id: '2', title: 'Aluguel & Condomínio', amount: 1400, type: 'expense', category: 'Moradia', date: '2026-10-02' },
+                { id: '3', title: 'Feira Semanal', amount: 320, type: 'expense', category: 'Alimentação', date: '2026-10-05' }
+            ],
+            habits: [
+                { id: '1', title: 'Beber 2L de água', category: 'Saúde', streak: 7, completedDays: [0, 1, 2, 3] },
+                { id: '2', title: 'Ler 20 páginas', category: 'Estudo', streak: 4, completedDays: [0, 2, 3] },
+                { id: '3', title: 'Meditar 10min', category: 'Bem-estar', streak: 5, completedDays: [1, 3] }
+            ],
+            notes: [
+                { id: '1', title: 'Ideias de Projeto 2026', content: 'Criar uma plataforma de cursos com interface dark mode moderna.', tags: ['ideias', 'dev'], favorite: true, date: '2026-10-06' },
+                { id: '2', title: 'Checklist da Viagem', content: 'Passaporte, carregadores, fone de ouvido, protetor solar.', tags: ['pessoal'], favorite: false, date: '2026-10-07' }
+            ],
+            pomodoro: {
+                focusMinutesToday: 75,
+                sessionsToday: 3,
+                mode: 'focus', // focus | shortBreak | longBreak
+                timeLeft: 25 * 60,
+                isRunning: false
+            },
+            wishlist: [
+                { 
+                    id: '1', 
+                    title: 'MacBook Pro M3', 
+                    targetAmount: 12000, 
+                    savedAmount: 8500, 
+                    category: 'Tecnologia', 
+                    priority: 'Alta', 
+                    conquered: false, 
+                    url: 'https://apple.com', 
+                    notes: 'Para acelerar os projetos de programação e design.' 
+                },
+                { 
+                    id: '2', 
+                    title: 'Viagem para o Japão', 
+                    targetAmount: 18000, 
+                    savedAmount: 6200, 
+                    category: 'Viagens', 
+                    priority: 'Alta', 
+                    conquered: false, 
+                    url: '', 
+                    notes: 'Roteiro Tóquio, Kyoto e Osaka durante a primavera.' 
+                },
+                { 
+                    id: '3', 
+                    title: 'Cadeira Ergonômica Herman Miller', 
+                    targetAmount: 4500, 
+                    savedAmount: 4500, 
+                    category: 'Casa', 
+                    priority: 'Média', 
+                    conquered: true, 
+                    url: '', 
+                    notes: 'Investimento na saúde da coluna para o home office.' 
+                }
+            ]
+        };
+
+        // Application State Variable
+        let state = loadState();
+        let currentTab = 'dashboard';
+        let currentTaskView = 'kanban';
+        let currentModalType = null;
+        let activeWishSavingsId = null;
+        let pomodoroTimer = null;
+        let dashChartInstance = null;
+        let finChartInstance = null;
+
+        function loadState() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try { 
+                    const parsed = JSON.parse(saved);
+                    if (!parsed.wishlist) parsed.wishlist = defaultState.wishlist;
+                    return parsed; 
+                } catch(e) { console.error(e); }
+            }
+            return JSON.parse(JSON.stringify(defaultState));
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            refreshUI();
+        }
+
+        function resetDataModal() {
+            if (confirm("Tem certeza que deseja resetar todos os dados para o padrão?")) {
+                state = JSON.parse(JSON.stringify(defaultState));
+                saveState();
+            }
+        }
+
+        // Navigation Tab Switcher
+        function switchTab(tab) {
+            currentTab = tab;
+
+            // Hide all views
+            ['dashboard', 'tasks', 'finances', 'habits', 'notes', 'pomodoro', 'wishlist'].forEach(v => {
+                const targetView = document.getElementById(`view-${v}`);
+                if (targetView) targetView.classList.add('hidden');
+                
+                // Desktop nav highlight
+                const navBtn = document.getElementById(`nav-${v}`);
+                if (navBtn) navBtn.classList.remove('nav-item-active');
+
+                // Mobile nav highlight
+                const mobBtn = document.getElementById(`mobile-nav-${v}`);
+                if (mobBtn) {
+                    mobBtn.classList.remove('text-brand-400');
+                    mobBtn.classList.add('text-gray-400');
+                }
+            });
+
+            // Show active view
+            const activeView = document.getElementById(`view-${tab}`);
+            if (activeView) activeView.classList.remove('hidden');
+
+            const activeNav = document.getElementById(`nav-${tab}`);
+            if (activeNav) activeNav.classList.add('nav-item-active');
+
+            const activeMob = document.getElementById(`mobile-nav-${tab}`);
+            if (activeMob) {
+                activeMob.classList.remove('text-gray-400');
+                activeMob.classList.add('text-brand-400');
+            }
+
+            // Update Header Title
+            const titleMap = {
+                dashboard: ['fa-chart-pie text-brand-400', 'Dashboard'],
+                tasks: ['fa-list-check text-brand-400', 'Tarefas & Kanban'],
+                finances: ['fa-wallet text-accent-cyan', 'Gestão Financeira'],
+                habits: ['fa-fire text-accent-amber', 'Rastreador de Hábitos'],
+                notes: ['fa-note-sticky text-brand-400', 'Notas & Ideias'],
+                pomodoro: ['fa-stopwatch text-accent-purple', 'Timer Pomodoro'],
+                wishlist: ['fa-wand-magic-sparkles text-accent-pink', 'Lista de Desejos']
+            };
+            const [iconClass, label] = titleMap[tab];
+            document.getElementById('page-title').innerHTML = `<i class="fa-solid ${iconClass}"></i><span>${label}</span>`;
+
+            refreshUI();
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+
+        function renderDashboard() {
+            // Task Metrics
+            const totalTasks = state.tasks.length;
+            const doneTasks = state.tasks.filter(t => t.status === 'Done').length;
+            const taskPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+            document.getElementById('dash-task-count').textContent = `${doneTasks}/${totalTasks}`;
+            document.getElementById('dash-task-pct').textContent = `${taskPct}%`;
+
+            // Financial Metrics
+            const inc = state.finances.filter(f => f.type === 'income').reduce((a, b) => a + b.amount, 0);
+            const exp = state.finances.filter(f => f.type === 'expense').reduce((a, b) => a + b.amount, 0);
+            const bal = inc - exp;
+            document.getElementById('dash-balance').textContent = `R$ ${bal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+            // Habits Metrics
+            const totalHabits = state.habits.length;
+            const todayIdx = (new Date().getDay() + 6) % 7; // Mon=0
+            const doneHabits = state.habits.filter(h => h.completedDays.includes(todayIdx)).length;
+            const habitPct = totalHabits > 0 ? Math.round((doneHabits / totalHabits) * 100) : 0;
+            document.getElementById('dash-habit-pct').textContent = `${habitPct}%`;
+            document.getElementById('dash-habit-count').textContent = `${doneHabits}/${totalHabits}`;
+
+            // Wishlist Metrics for Dashboard
+            const totalWish = state.wishlist.length;
+            const conqueredWish = state.wishlist.filter(w => w.conquered).length;
+            const totalWishTarget = state.wishlist.reduce((acc, w) => acc + w.targetAmount, 0);
+            const totalWishSaved = state.wishlist.reduce((acc, w) => acc + w.savedAmount, 0);
+            const wishPct = totalWishTarget > 0 ? Math.min(100, Math.round((totalWishSaved / totalWishTarget) * 100)) : 0;
+            
+            document.getElementById('dash-wish-pct').textContent = `${wishPct}%`;
+            document.getElementById('dash-wish-count').textContent = `${conqueredWish}/${totalWish}`;
+            
+            // Sidebar badge count
+            const pendingWishCount = totalWish - conqueredWish;
+            document.getElementById('wishlist-badge-count').textContent = pendingWishCount;
+
+            // Priority Task List
+            const prioTasksContainer = document.getElementById('dash-task-list');
+            prioTasksContainer.innerHTML = '';
+            const priorityTasks = state.tasks.filter(t => t.status !== 'Done').slice(0, 3);
+            
+            if (priorityTasks.length === 0) {
+                prioTasksContainer.innerHTML = '<p class="text-xs text-gray-500 italic py-2">Nenhuma tarefa pendente!</p>';
+            } else {
+                priorityTasks.forEach(t => {
+                    const prioColor = t.priority === 'Alta' ? 'text-accent-rose' : (t.priority === 'Média' ? 'text-accent-amber' : 'text-gray-400');
+                    prioTasksContainer.innerHTML += `
+                        <div class="flex items-center justify-between p-2.5 rounded-lg bg-dark-bg border border-dark-border text-xs">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" onchange="toggleTaskStatus('${t.id}')" class="rounded custom-checkbox w-4 h-4 cursor-pointer">
+                                <span class="font-medium text-white">${escapeHtml(t.title)}</span>
+                            </div>
+                            <span class="font-bold text-[10px] ${prioColor}">${t.priority}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            // Quick Habits List
+            const habitsContainer = document.getElementById('dash-habit-list');
+            habitsContainer.innerHTML = '';
+            state.habits.forEach(h => {
+                const isDone = h.completedDays.includes(todayIdx);
+                habitsContainer.innerHTML += `
+                    <button onclick="toggleHabitDay('${h.id}', ${todayIdx})" class="p-3 rounded-xl border text-left flex items-center justify-between transition ${isDone ? 'bg-brand-500/10 border-brand-500/30 text-brand-400' : 'bg-dark-bg border-dark-border text-gray-400 hover:text-white'}">
+                        <div>
+                            <p class="text-xs font-bold text-white">${escapeHtml(h.title)}</p>
+                            <p class="text-[10px] opacity-75">Sequência: ${h.streak} dias 🔥</p>
+                        </div>
+                        <i class="fa-solid ${isDone ? 'fa-circle-check text-brand-400' : 'fa-circle text-gray-600'} text-base"></i>
+                    </button>
+                `;
+            });
+
+            // DASHBOARD WIDGET: Próximos Desejos Quase Lá
+            const wishContainer = document.getElementById('dash-wishlist-container');
+            wishContainer.innerHTML = '';
+            const pendingWishes = state.wishlist
+                .filter(w => !w.conquered)
+                .map(w => ({ ...w, pct: w.targetAmount > 0 ? Math.min(100, Math.round((w.savedAmount / w.targetAmount) * 100)) : 0 }))
+                .sort((a, b) => b.pct - a.pct)
+                .slice(0, 2);
+
+            if (pendingWishes.length === 0) {
+                wishContainer.innerHTML = '<p class="text-xs text-gray-500 italic py-2 col-span-2">Nenhum desejo pendente! Adicione novas metas.</p>';
+            } else {
+                pendingWishes.forEach(w => {
+                    wishContainer.innerHTML += `
+                        <div class="p-3 rounded-xl bg-dark-bg border border-dark-border space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-xs text-white truncate max-w-[140px]">${escapeHtml(w.title)}</span>
+                                <span class="text-[10px] font-mono font-bold text-accent-pink">${w.pct}%</span>
+                            </div>
+                            <div class="w-full bg-dark-card rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-gradient-to-r from-accent-pink to-accent-purple h-full rounded-full" style="width: ${w.pct}%"></div>
+                            </div>
+                            <div class="flex justify-between items-center text-[10px] text-gray-400">
+                                <span>R$ ${w.savedAmount.toLocaleString('pt-BR')} / ${w.targetAmount.toLocaleString('pt-BR')}</span>
+                                <button onclick="quickAddSavingsPrompt('${w.id}')" class="text-accent-pink hover:underline font-bold">+ Economia</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Render Dashboard Doughnut Chart
+            renderDashChart();
+        }
+
+        function renderDashChart() {
+            const ctx = document.getElementById('dash-finance-chart');
+            if (!ctx) return;
+
+            const categories = {};
+            state.finances.filter(f => f.type === 'expense').forEach(f => {
+                categories[f.category] = (categories[f.category] || 0) + f.amount;
+            });
+
+            const labels = Object.keys(categories);
+            const data = Object.values(categories);
+
+            if (dashChartInstance) dashChartInstance.destroy();
+
+            dashChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.length ? labels : ['Sem Gastos'],
+                    datasets: [{
+                        data: data.length ? data : [1],
+                        backgroundColor: ['#22c55e', '#06b6d4', '#f59e0b', '#f43f5e', '#a855f7'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 10 } } }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        function setTaskView(view) {
+            currentTaskView = view;
+            if (view === 'kanban') {
+                document.getElementById('tasks-kanban-view').classList.remove('hidden');
+                document.getElementById('tasks-list-view').classList.add('hidden');
+                document.getElementById('btn-view-kanban').className = 'px-2.5 py-1 text-xs font-semibold rounded bg-brand-600 text-white transition';
+                document.getElementById('btn-view-list').className = 'px-2.5 py-1 text-xs font-semibold rounded text-gray-400 hover:text-white transition';
+            } else {
+                document.getElementById('tasks-kanban-view').classList.add('hidden');
+                document.getElementById('tasks-list-view').classList.remove('hidden');
+                document.getElementById('btn-view-list').className = 'px-2.5 py-1 text-xs font-semibold rounded bg-brand-600 text-white transition';
+                document.getElementById('btn-view-kanban').className = 'px-2.5 py-1 text-xs font-semibold rounded text-gray-400 hover:text-white transition';
+            }
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const search = document.getElementById('task-search').value.toLowerCase();
+            const prioFilter = document.getElementById('task-filter-priority').value;
+
+            let filtered = state.tasks.filter(t => {
+                const matchesSearch = t.title.toLowerCase().includes(search);
+                const matchesPrio = prioFilter === 'all' || t.priority === prioFilter;
+                return matchesSearch && matchesPrio;
+            });
+
+            if (currentTaskView === 'kanban') {
+                const todoCol = document.getElementById('col-todo');
+                const inProgressCol = document.getElementById('col-in-progress');
+                const doneCol = document.getElementById('col-done');
+
+                todoCol.innerHTML = '';
+                inProgressCol.innerHTML = '';
+                doneCol.innerHTML = '';
+
+                let todoCount = 0, inProgCount = 0, doneCount = 0;
+
+                filtered.forEach(t => {
+                    const card = createTaskCard(t);
+                    if (t.status === 'To Do') {
+                        todoCol.appendChild(card);
+                        todoCount++;
+                    } else if (t.status === 'In Progress') {
+                        inProgressCol.appendChild(card);
+                        inProgCount++;
+                    } else if (t.status === 'Done') {
+                        doneCol.appendChild(card);
+                        doneCount++;
+                    }
+                });
+
+                document.getElementById('count-todo').textContent = todoCount;
+                document.getElementById('count-in-progress').textContent = inProgCount;
+                document.getElementById('count-done').textContent = doneCount;
+
+            } else {
+                const listContainer = document.getElementById('tasks-list-container');
+                listContainer.innerHTML = '';
+                filtered.forEach(t => {
+                    listContainer.innerHTML += `
+                        <div class="py-3 flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" ${t.status === 'Done' ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}')" class="rounded custom-checkbox w-4 h-4 cursor-pointer">
+                                <div>
+                                    <p class="font-bold text-white ${t.status === 'Done' ? 'line-through text-gray-500' : ''}">${escapeHtml(t.title)}</p>
+                                    <p class="text-[10px] text-gray-400">${t.category} • Vencimento: ${t.dueDate}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${t.priority === 'Alta' ? 'bg-rose-500/10 text-rose-400' : 'bg-amber-500/10 text-amber-400'}">${t.priority}</span>
+                                <button onclick="deleteTask('${t.id}')" class="text-gray-500 hover:text-rose-400 p-1"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function createTaskCard(t) {
+            const div = document.createElement('div');
+            div.className = 'glass-card p-3 rounded-xl space-y-2 border border-dark-border hover:border-brand-500/40 transition cursor-pointer';
+            
+            const prioBadge = t.priority === 'Alta' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : (t.priority === 'Média' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20');
+
+            div.innerHTML = `
+                <div class="flex items-start justify-between gap-2">
+                    <span class="text-xs font-bold text-white leading-snug">${escapeHtml(t.title)}</span>
+                    <button onclick="deleteTask('${t.id}')" class="text-gray-500 hover:text-rose-400 text-xs"><i class="fa-solid fa-trash"></i></button>
+                </div>
+                <div class="flex items-center justify-between pt-1">
+                    <span class="text-[10px] px-2 py-0.5 rounded border ${prioBadge} font-bold">${t.priority}</span>
+                    <select onchange="updateTaskStatus('${t.id}', this.value)" class="bg-dark-bg text-[10px] text-gray-300 border border-dark-border rounded px-1.5 py-0.5 focus:outline-none">
+                        <option value="To Do" ${t.status === 'To Do' ? 'selected' : ''}>A Fazer</option>
+                        <option value="In Progress" ${t.status === 'In Progress' ? 'selected' : ''}>Em Progresso</option>
+                        <option value="Done" ${t.status === 'Done' ? 'selected' : ''}>Concluído</option>
+                    </select>
+                </div>
+            `;
+            return div;
+        }
+
+        function toggleTaskStatus(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (task) {
+                task.status = task.status === 'Done' ? 'To Do' : 'Done';
+                saveState();
+            }
+        }
+
+        function updateTaskStatus(id, newStatus) {
+            const task = state.tasks.find(t => t.id === id);
+            if (task) {
+                task.status = newStatus;
+                saveState();
+            }
+        }
+
+        function deleteTask(id) {
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            saveState();
+        }
+
+        function renderFinances() {
+            const inc = state.finances.filter(f => f.type === 'income').reduce((a, b) => a + b.amount, 0);
+            const exp = state.finances.filter(f => f.type === 'expense').reduce((a, b) => a + b.amount, 0);
+            const bal = inc - exp;
+
+            document.getElementById('fin-income').textContent = `R$ ${inc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            document.getElementById('fin-expense').textContent = `R$ ${exp.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            document.getElementById('fin-balance').textContent = `R$ ${bal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+            const listContainer = document.getElementById('finance-list');
+            listContainer.innerHTML = '';
+
+            state.finances.forEach(f => {
+                const isInc = f.type === 'income';
+                listContainer.innerHTML += `
+                    <div class="py-3 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg ${isInc ? 'bg-brand-500/10 text-brand-400' : 'bg-rose-500/10 text-rose-400'} flex items-center justify-center">
+                                <i class="fa-solid ${isInc ? 'fa-arrow-down-left' : 'fa-arrow-up-right'}"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-white">${escapeHtml(f.title)}</p>
+                                <p class="text-[10px] text-gray-400">${f.category} • ${f.date}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold ${isInc ? 'text-brand-400' : 'text-rose-400'}">${isInc ? '+' : '-'} R$ ${f.amount.toFixed(2)}</span>
+                            <button onclick="deleteFinance('${f.id}')" class="text-gray-500 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Render Finance Main Chart
+            const ctx = document.getElementById('finance-chart-main');
+            if (ctx) {
+                const categories = {};
+                state.finances.filter(f => f.type === 'expense').forEach(f => {
+                    categories[f.category] = (categories[f.category] || 0) + f.amount;
+                });
+
+                if (finChartInstance) finChartInstance.destroy();
+                finChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(categories),
+                        datasets: [{
+                            label: 'Gastos R$',
+                            data: Object.values(categories),
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } },
+                            y: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { color: '#1f2937' } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function deleteFinance(id) {
+            state.finances = state.finances.filter(f => f.id !== id);
+            saveState();
+        }
+
+        function renderHabits() {
+            const daysName = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+            const container = document.getElementById('habits-matrix-container');
+            container.innerHTML = '';
+
+            state.habits.forEach(h => {
+                let daysHtml = '';
+                daysName.forEach((day, idx) => {
+                    const isDone = h.completedDays.includes(idx);
+                    daysHtml += `
+                        <button onclick="toggleHabitDay('${h.id}', ${idx})" class="flex flex-col items-center gap-1 p-2 rounded-xl border transition ${isDone ? 'bg-brand-500/20 border-brand-500 text-brand-400' : 'bg-dark-bg border-dark-border text-gray-500 hover:text-white'}">
+                            <span class="text-[10px] font-bold">${day}</span>
+                            <i class="fa-solid ${isDone ? 'fa-check' : 'fa-minus'} text-xs"></i>
+                        </button>
+                    `;
+                });
+
+                container.innerHTML += `
+                    <div class="glass-card p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex items-center justify-between md:justify-start gap-4">
+                            <div>
+                                <h4 class="font-bold text-white text-sm">${escapeHtml(h.title)}</h4>
+                                <span class="text-[10px] text-gray-400">${h.category}</span>
+                            </div>
+                            <div class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1">
+                                <i class="fa-solid fa-fire"></i> ${h.streak}d
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-7 gap-1.5 sm:gap-2">
+                            ${daysHtml}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleHabitDay(habitId, dayIdx) {
+            const habit = state.habits.find(h => h.id === habitId);
+            if (habit) {
+                if (habit.completedDays.includes(dayIdx)) {
+                    habit.completedDays = habit.completedDays.filter(d => d !== dayIdx);
+                } else {
+                    habit.completedDays.push(dayIdx);
+                }
+                habit.streak = habit.completedDays.length * 2;
+                saveState();
+            }
+        }
+
+        function renderNotes() {
+            const search = document.getElementById('note-search').value.toLowerCase();
+            const grid = document.getElementById('notes-grid');
+            grid.innerHTML = '';
+
+            const filtered = state.notes.filter(n => 
+                n.title.toLowerCase().includes(search) || 
+                n.content.toLowerCase().includes(search) ||
+                n.tags.some(t => t.toLowerCase().includes(search))
+            );
+
+            filtered.forEach(n => {
+                grid.innerHTML += `
+                    <div class="glass-card p-4 rounded-2xl space-y-3 flex flex-col justify-between border border-dark-border hover:border-brand-500/30 transition">
+                        <div class="space-y-2">
+                            <div class="flex items-start justify-between gap-2">
+                                <h4 class="font-bold text-white text-sm">${escapeHtml(n.title)}</h4>
+                                <button onclick="toggleFavoriteNote('${n.id}')" class="${n.favorite ? 'text-amber-400' : 'text-gray-600 hover:text-amber-400'} text-xs">
+                                    <i class="fa-solid fa-star"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-300 leading-relaxed whitespace-pre-line line-clamp-4">${escapeHtml(n.content)}</p>
+                        </div>
+                        <div class="pt-2 border-t border-dark-border flex items-center justify-between text-[10px]">
+                            <div class="flex gap-1 flex-wrap">
+                                ${n.tags.map(t => `<span class="bg-dark-bg text-gray-400 px-1.5 py-0.5 rounded border border-dark-border">#${t}</span>`).join('')}
+                            </div>
+                            <button onclick="deleteNote('${n.id}')" class="text-gray-500 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleFavoriteNote(id) {
+            const note = state.notes.find(n => n.id === id);
+            if (note) {
+                note.favorite = !note.favorite;
+                saveState();
+            }
+        }
+
+        function deleteNote(id) {
+            state.notes = state.notes.filter(n => n.id !== id);
+            saveState();
+        }
+
+        function setPomoMode(mode) {
+            state.pomodoro.mode = mode;
+            if (pomodoroTimer) clearInterval(pomodoroTimer);
+            state.pomodoro.isRunning = false;
+
+            if (mode === 'focus') state.pomodoro.timeLeft = 25 * 60;
+            else if (mode === 'shortBreak') state.pomodoro.timeLeft = 5 * 60;
+            else if (mode === 'longBreak') state.pomodoro.timeLeft = 15 * 60;
+
+            updatePomoUI();
+        }
+
+        function togglePomodoro() {
+            if (state.pomodoro.isRunning) {
+                clearInterval(pomodoroTimer);
+                state.pomodoro.isRunning = false;
+            } else {
+                state.pomodoro.isRunning = true;
+                pomodoroTimer = setInterval(() => {
+                    if (state.pomodoro.timeLeft > 0) {
+                        state.pomodoro.timeLeft--;
+                        updatePomoUI();
+                    } else {
+                        clearInterval(pomodoroTimer);
+                        state.pomodoro.isRunning = false;
+                        playChime();
+                        if (state.pomodoro.mode === 'focus') {
+                            state.pomodoro.focusMinutesToday += 25;
+                            state.pomodoro.sessionsToday += 1;
+                        }
+                        saveState();
+                        alert("Sessão Pomodoro Concluída! 🎉");
+                    }
+                }, 1000);
+            }
+            updatePomoUI();
+        }
+
+        function resetPomodoro() {
+            setPomoMode(state.pomodoro.mode);
+        }
+
+        function updatePomoUI() {
+            const min = Math.floor(state.pomodoro.timeLeft / 60);
+            const sec = state.pomodoro.timeLeft % 60;
+            const timeStr = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+
+            document.getElementById('pomo-timer-text').textContent = timeStr;
+            document.getElementById('dash-pomo-display').textContent = timeStr;
+
+            const btnText = state.pomodoro.isRunning ? 'Pausar' : 'Iniciar Foco';
+            document.getElementById('pomo-main-btn').textContent = btnText;
+            document.getElementById('dash-pomo-btn').textContent = btnText;
+
+            const total = state.pomodoro.mode === 'focus' ? 25 * 60 : (state.pomodoro.mode === 'shortBreak' ? 5 * 60 : 15 * 60);
+            const offset = 691 - (state.pomodoro.timeLeft / total) * 691;
+            const ring = document.getElementById('pomo-progress-ring');
+            if (ring) ring.style.strokeDashoffset = offset;
+
+            document.getElementById('pomo-sessions-count').textContent = state.pomodoro.sessionsToday;
+            document.getElementById('pomo-total-time').textContent = `${state.pomodoro.focusMinutesToday} min`;
+        }
+
+        function renderWishlist() {
+            const search = (document.getElementById('wish-search')?.value || '').toLowerCase();
+            const catFilter = document.getElementById('wish-filter-category')?.value || 'all';
+            const prioFilter = document.getElementById('wish-filter-priority')?.value || 'all';
+            const statusFilter = document.getElementById('wish-filter-status')?.value || 'all';
+
+            // Metrics calculation
+            const totalSaved = state.wishlist.reduce((acc, w) => acc + w.savedAmount, 0);
+            const totalTarget = state.wishlist.reduce((acc, w) => acc + w.targetAmount, 0);
+            const totalConquered = state.wishlist.filter(w => w.conquered).length;
+            const totalCount = state.wishlist.length;
+            const overallPct = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
+
+            document.getElementById('wish-total-saved').textContent = `R$ ${totalSaved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            document.getElementById('wish-total-target').textContent = `R$ ${totalTarget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            document.getElementById('wish-conquered-count').textContent = `${totalConquered} / ${totalCount}`;
+            document.getElementById('wish-overall-pct').textContent = `${overallPct}%`;
+            document.getElementById('wish-overall-bar').style.width = `${overallPct}%`;
+
+            // Filtering
+            const filtered = state.wishlist.filter(w => {
+                const matchesSearch = w.title.toLowerCase().includes(search) || (w.notes && w.notes.toLowerCase().includes(search));
+                const matchesCat = catFilter === 'all' || w.category === catFilter;
+                const matchesPrio = prioFilter === 'all' || w.priority === prioFilter;
+                const matchesStatus = statusFilter === 'all' || (statusFilter === 'conquered' ? w.conquered : !w.conquered);
+                return matchesSearch && matchesCat && matchesPrio && matchesStatus;
+            });
+
+            const grid = document.getElementById('wishlist-cards-grid');
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-gray-500 space-y-3 glass-card rounded-2xl">
+                        <i class="fa-solid fa-wand-magic-sparkles text-3xl text-accent-pink/40"></i>
+                        <p class="text-sm font-semibold">Nenhum desejo encontrado nesta categoria.</p>
+                        <button onclick="openModal('wish')" class="text-xs text-accent-pink font-bold hover:underline">+ Cadastrar novo desejo</button>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(w => {
+                const pct = w.targetAmount > 0 ? Math.min(100, Math.round((w.savedAmount / w.targetAmount) * 100)) : 0;
+                const isConquered = w.conquered;
+
+                // Priority Badge Color
+                const prioClass = w.priority === 'Alta' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : (w.priority === 'Média' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20');
+
+                // Category Icon Map
+                const catIcons = {
+                    'Tecnologia': 'fa-laptop',
+                    'Viagens': 'fa-plane',
+                    'Lazer': 'fa-gamepad',
+                    'Casa': 'fa-couch',
+                    'Estudos': 'fa-graduation-cap',
+                    'Vestuário': 'fa-shirt',
+                    'Outros': 'fa-gift'
+                };
+                const catIcon = catIcons[w.category] || 'fa-gift';
+
+                grid.innerHTML += `
+                    <div class="glass-card glass-card-hover p-5 rounded-2xl space-y-4 flex flex-col justify-between relative overflow-hidden border ${isConquered ? 'border-brand-500/40 bg-brand-500/5' : 'border-dark-border'}">
+                        
+                        <!-- Top Header: Category & Priority -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 bg-dark-bg px-2.5 py-1 rounded-md border border-dark-border">
+                                    <i class="fa-solid ${catIcon} text-accent-pink"></i>
+                                    <span>${w.category}</span>
+                                </span>
+                                
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${prioClass}">${w.priority}</span>
+                                    <button onclick="deleteWish('${w.id}')" class="text-gray-500 hover:text-rose-400 text-xs transition"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+
+                            <!-- Title & Conquered Badge -->
+                            <div class="space-y-1">
+                                <div class="flex items-start justify-between gap-2">
+                                    <h4 class="font-extrabold text-white text-base leading-snug ${isConquered ? 'line-through opacity-80' : ''}">${escapeHtml(w.title)}</h4>
+                                    ${isConquered ? '<span class="bg-brand-500/20 text-brand-400 border border-brand-500/30 text-[10px] font-black px-2 py-0.5 rounded-full uppercase shrink-0">Conquistado 🎉</span>' : ''}
+                                </div>
+                                ${w.notes ? `<p class="text-xs text-gray-400 line-clamp-2">${escapeHtml(w.notes)}</p>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Progress Section -->
+                        <div class="space-y-2 bg-dark-bg/60 p-3 rounded-xl border border-dark-border">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-gray-400">Progresso</span>
+                                <span class="font-mono font-bold text-accent-pink">${pct}%</span>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-dark-card rounded-full h-2 overflow-hidden">
+                                <div class="bg-gradient-to-r ${isConquered ? 'from-brand-500 to-brand-400' : 'from-accent-pink to-accent-cyan'} h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                            </div>
+
+                            <div class="flex justify-between items-center text-xs pt-1 font-mono">
+                                <div>
+                                    <span class="text-[10px] text-gray-500 block">Guardado</span>
+                                    <span class="font-bold text-white">R$ ${w.savedAmount.toLocaleString('pt-BR')}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] text-gray-500 block">Meta</span>
+                                    <span class="font-bold text-gray-300">R$ ${w.targetAmount.toLocaleString('pt-BR')}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions Footer -->
+                        <div class="pt-2 flex items-center justify-between gap-2 border-t border-dark-border">
+                            <button onclick="quickAddSavingsPrompt('${w.id}')" ${isConquered ? 'disabled class="opacity-40 text-gray-500 text-xs cursor-not-allowed"' : 'class="bg-accent-pink/10 hover:bg-accent-pink/20 text-accent-pink border border-accent-pink/30 text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"'}>
+                                <i class="fa-solid fa-plus text-[10px]"></i> + Economia
+                            </button>
+
+                            <div class="flex items-center gap-1.5">
+                                ${w.url ? `<a href="${escapeHtml(w.url)}" target="_blank" class="p-1.5 text-gray-400 hover:text-white bg-dark-bg hover:bg-dark-border rounded-lg border border-dark-border text-xs transition" title="Abrir link do produto"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ''}
+                                
+                                <button onclick="toggleWishConquered('${w.id}')" class="p-1.5 ${isConquered ? 'bg-brand-500/20 text-brand-400 border-brand-500/40' : 'bg-dark-bg text-gray-400 hover:text-white'} border border-dark-border rounded-lg text-xs transition" title="${isConquered ? 'Marcar como não conquistado' : 'Marcar como conquistado'}">
+                                    <i class="fa-solid fa-trophy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                `;
+            });
+        }
+
+        function toggleWishConquered(id) {
+            const wish = state.wishlist.find(w => w.id === id);
+            if (wish) {
+                wish.conquered = !wish.conquered;
+                if (wish.conquered) {
+                    wish.savedAmount = wish.targetAmount; // Set to full saved on conquered
+                    triggerConfetti();
+                }
+                saveState();
+            }
+        }
+
+        function deleteWish(id) {
+            if (confirm("Tem certeza que deseja remover este desejo?")) {
+                state.wishlist = state.wishlist.filter(w => w.id !== id);
+                saveState();
+            }
+        }
+
+        function quickAddSavingsPrompt(id) {
+            activeWishSavingsId = id;
+            openModal('add-savings');
+        }
+
+        function triggerConfetti() {
+            try {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            } catch(e) {}
+        }
+
+        function openModal(type) {
+            currentModalType = type;
+            const modal = document.getElementById('app-modal');
+            const title = document.getElementById('modal-title');
+            const body = document.getElementById('modal-body');
+
+            body.innerHTML = '';
+            modal.classList.remove('hidden');
+
+            if (type === 'task' || type === 'quick-add') {
+                title.textContent = 'Criar Nova Tarefa';
+                body.innerHTML = `
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Título</label>
+                        <input type="text" name="title" required class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Prioridade</label>
+                            <select name="priority" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                                <option value="Alta">Alta</option>
+                                <option value="Média" selected>Média</option>
+                                <option value="Baixa">Baixa</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Categoria</label>
+                            <input type="text" name="category" value="Geral" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'finance') {
+                title.textContent = 'Nova Transação';
+                body.innerHTML = `
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Descrição</label>
+                        <input type="text" name="title" required class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Valor (R$)</label>
+                            <input type="number" step="0.01" name="amount" required class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Tipo</label>
+                            <select name="type" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                                <option value="expense">Despesa</option>
+                                <option value="income">Receita</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Categoria</label>
+                        <input type="text" name="category" value="Outros" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                `;
+            } else if (type === 'habit') {
+                title.textContent = 'Novo Hábito';
+                body.innerHTML = `
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Nome do Hábito</label>
+                        <input type="text" name="title" required class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Categoria</label>
+                        <input type="text" name="category" value="Saúde" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                `;
+            } else if (type === 'note') {
+                title.textContent = 'Nova Nota';
+                body.innerHTML = `
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Título</label>
+                        <input type="text" name="title" required class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Conteúdo</label>
+                        <textarea name="content" rows="4" required class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1"></textarea>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Tags (separadas por vírgula)</label>
+                        <input type="text" name="tags" placeholder="trabalho, ideias" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                `;
+            } else if (type === 'wish') {
+                title.textContent = 'Novo Desejo / Meta';
+                body.innerHTML = `
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Nome do Item / Meta</label>
+                        <input type="text" name="title" placeholder="ex: MacBook Pro, Viagem Japão" required class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Valor Total (R$)</label>
+                            <input type="number" step="0.01" name="targetAmount" required class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Já Economizado (R$)</label>
+                            <input type="number" step="0.01" name="savedAmount" value="0" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Categoria</label>
+                            <select name="category" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                                <option value="Tecnologia">Tecnologia</option>
+                                <option value="Viagens">Viagens</option>
+                                <option value="Lazer">Lazer</option>
+                                <option value="Casa">Casa</option>
+                                <option value="Estudos">Estudos</option>
+                                <option value="Vestuário">Vestuário</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Prioridade</label>
+                            <select name="priority" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                                <option value="Alta">Alta</option>
+                                <option value="Média" selected>Média</option>
+                                <option value="Baixa">Baixa</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Link / URL do Produto (opcional)</label>
+                        <input type="url" name="url" placeholder="https://..." class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Observações / Motivação</label>
+                        <textarea name="notes" rows="2" placeholder="Por que deseja conquistar este item?" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1"></textarea>
+                    </div>
+                `;
+            } else if (type === 'add-savings') {
+                const wish = state.wishlist.find(w => w.id === activeWishSavingsId);
+                const remaining = wish ? wish.targetAmount - wish.savedAmount : 0;
+                title.textContent = `Adicionar Economia: ${wish ? wish.title : ''}`;
+                body.innerHTML = `
+                    <p class="text-xs text-gray-400">Restante para alcançar a meta: <strong class="text-accent-pink">R$ ${remaining.toLocaleString('pt-BR')}</strong></p>
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Valor a Adicionar (R$)</label>
+                        <input type="number" step="0.01" name="addedAmount" required focus class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                `;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('app-modal').classList.add('hidden');
+        }
+
+        function handleModalSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            if (currentModalType === 'task' || currentModalType === 'quick-add') {
+                state.tasks.push({
+                    id: Date.now().toString(),
+                    title: formData.get('title'),
+                    priority: formData.get('priority'),
+                    status: 'To Do',
+                    category: formData.get('category') || 'Geral',
+                    dueDate: new Date().toISOString().split('T')[0]
+                });
+            } else if (currentModalType === 'finance') {
+                state.finances.push({
+                    id: Date.now().toString(),
+                    title: formData.get('title'),
+                    amount: parseFloat(formData.get('amount')),
+                    type: formData.get('type'),
+                    category: formData.get('category') || 'Outros',
+                    date: new Date().toISOString().split('T')[0]
+                });
+            } else if (currentModalType === 'habit') {
+                state.habits.push({
+                    id: Date.now().toString(),
+                    title: formData.get('title'),
+                    category: formData.get('category') || 'Geral',
+                    streak: 0,
+                    completedDays: []
+                });
+            } else if (currentModalType === 'note') {
+                const tagsStr = formData.get('tags') || '';
+                state.notes.push({
+                    id: Date.now().toString(),
+                    title: formData.get('title'),
+                    content: formData.get('content'),
+                    tags: tagsStr.split(',').map(t => t.trim()).filter(Boolean),
+                    favorite: false,
+                    date: new Date().toISOString().split('T')[0]
+                });
+            } else if (currentModalType === 'wish') {
+                const targetAmount = parseFloat(formData.get('targetAmount')) || 0;
+                const savedAmount = parseFloat(formData.get('savedAmount')) || 0;
+                const conquered = savedAmount >= targetAmount && targetAmount > 0;
+
+                state.wishlist.push({
+                    id: Date.now().toString(),
+                    title: formData.get('title'),
+                    targetAmount: targetAmount,
+                    savedAmount: savedAmount,
+                    category: formData.get('category') || 'Outros',
+                    priority: formData.get('priority') || 'Média',
+                    conquered: conquered,
+                    url: formData.get('url') || '',
+                    notes: formData.get('notes') || ''
+                });
+
+                if (conquered) triggerConfetti();
+            } else if (currentModalType === 'add-savings') {
+                const added = parseFloat(formData.get('addedAmount')) || 0;
+                const wish = state.wishlist.find(w => w.id === activeWishSavingsId);
+                if (wish) {
+                    wish.savedAmount += added;
+                    if (wish.savedAmount >= wish.targetAmount) {
+                        wish.savedAmount = wish.targetAmount;
+                        wish.conquered = true;
+                        triggerConfetti();
+                    }
+                }
+            }
+
+            closeModal();
+            saveState();
+        }
+
+        function escapeHtml(str) {
+            return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function playChime() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.4);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(); osc.stop(ctx.currentTime + 0.5);
+            } catch(e) {}
+        }
+
+        function refreshUI() {
+            renderDashboard();
+            renderTasks();
+            renderFinances();
+            renderHabits();
+            renderNotes();
+            renderWishlist();
+            updatePomoUI();
+        }
+
+        // App Initializer
+        window.addEventListener('DOMContentLoaded', () => {
+            refreshUI();
+        });
+    </script>
+</body>
+</html>
