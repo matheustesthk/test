@@ -1723,6 +1723,62 @@
                         <label class="text-xs text-gray-400 font-semibold">Valor a Adicionar (R$)</label>
                         <input type="number" step="0.01" name="addedAmount" required focus class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
                     </div>
+                    } else if (type === 'edit-wish') {
+                const wish = state.wishlist.find(w => w.id === activeWishEditId);
+                if (!wish) {
+                    closeModal();
+                    return;
+                }
+
+                title.textContent = 'Editar Desejo / Meta';
+                const categories = ['Tecnologia', 'Viagens', 'Lazer', 'Casa', 'Estudos', 'Vestuário', 'Outros'];
+                const priorities = ['Alta', 'Média', 'Baixa'];
+
+                const categoryOptions = categories.map(cat => 
+                    `<option value="${cat}" ${wish.category === cat ? 'selected' : ''}>${cat}</option>`
+                ).join('');
+
+                const priorityOptions = priorities.map(prio => 
+                    `<option value="${prio}" ${wish.priority === prio ? 'selected' : ''}>${prio}</option>`
+                ).join('');
+
+                body.innerHTML = `
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Nome do Item / Meta</label>
+                        <input type="text" name="title" value="${escapeHtml(wish.title)}" required class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Valor Total (R$)</label>
+                            <input type="number" step="0.01" name="targetAmount" value="${wish.targetAmount}" required class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Já Economizado (R$)</label>
+                            <input type="number" step="0.01" name="savedAmount" value="${wish.savedAmount}" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Categoria</label>
+                            <select name="category" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                                ${categoryOptions}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 font-semibold">Prioridade</label>
+                            <select name="priority" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                                ${priorityOptions}
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Link / URL do Produto (opcional)</label>
+                        <input type="url" name="url" value="${escapeHtml(wish.url || '')}" placeholder="https://..." class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 font-semibold">Observações / Motivação</label>
+                        <textarea name="notes" rows="2" placeholder="Por que deseja conquistar este item?" class="w-full bg-dark-bg border border-dark-border rounded-lg p-2 text-xs text-white mt-1">${escapeHtml(wish.notes || '')}</textarea>
+                    </div>
                 `;
             }
         }
@@ -1786,7 +1842,7 @@
                     conquered: conquered,
                     url: formData.get('url') || '',
                     notes: formData.get('notes') || ''
-                });
+                      });
 
                 if (conquered) triggerConfetti();
             } else if (currentModalType === 'add-savings') {
@@ -1800,9 +1856,40 @@
                         triggerConfetti();
                     }
                 }
+            } else if (currentModalType === 'edit-wish') {
+                try {
+                    const wishIndex = state.wishlist.findIndex(w => w.id === activeWishEditId);
+                    if (wishIndex !== -1) {
+                        const targetAmount = parseFloat(formData.get('targetAmount')) || 0;
+                        const savedAmount = parseFloat(formData.get('savedAmount')) || 0;
+                        const wasConquered = state.wishlist[wishIndex].conquered;
+                        const isNowConquered = savedAmount >= targetAmount && targetAmount > 0;
+
+                        state.wishlist[wishIndex] = {
+                            ...state.wishlist[wishIndex],
+                            title: formData.get('title').trim(),
+                            targetAmount: targetAmount,
+                            savedAmount: savedAmount,
+                            category: formData.get('category') || 'Outros',
+                            priority: formData.get('priority') || 'Média',
+                            conquered: isNowConquered,
+                            url: (formData.get('url') || '').trim(),
+                            notes: (formData.get('notes') || '').trim()
+                        };
+
+                        if (!wasConquered && isNowConquered) {
+                            triggerConfetti();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erro ao salvar edição do desejo:', error);
+                } finally {
+                    activeWishEditId = null;
+                }
             }
 
             closeModal();
+
             saveState();
         }
 
