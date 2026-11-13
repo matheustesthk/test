@@ -213,7 +213,7 @@
                 </button>
                 <h2 id="page-title" class="text-lg font-bold text-white flex items-center gap-2">
                     <i class="fa-solid fa-chart-pie text-brand-400"></i>
-                    <span>Dashboard</span>
+                    <span>Dashboard</span>                                                                    
                 </h2>
             </div>
 
@@ -1551,6 +1551,23 @@
 
         function quickAddSavingsPrompt(id) {
             activeWishSavingsId = id;
+            // ==========================================
+        // FUNÇÃO AUXILIAR: ABRIR EDIÇÃO DE DESEJO
+        // ==========================================
+        function openEditWishModal(id) {
+            try {
+                if (!id) return;
+                const wish = state.wishlist.find(w => w.id === id);
+                if (!wish) {
+                    console.warn('Desejo não encontrado para edição:', id);
+                    return;
+                }
+                activeWishEditId = id;
+                openModal('edit-wish');
+            } catch (error) {
+                console.error('Erro ao abrir modal de edição de desejo:', error);
+            }
+        }
             openModal('add-savings');
         }
 
